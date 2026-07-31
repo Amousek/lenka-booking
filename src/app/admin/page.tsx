@@ -29,6 +29,18 @@ interface Reservation {
   } | null;
 }
 
+interface Suggestion {
+  id: string;
+  name: string;
+  date: string;
+  time_from: string;
+  time_to: string;
+  activity: string;
+  note: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+}
+
 const PRESET_ACTIVITIES = [
   "☕ Káva / Procházka",
   "🍷 Posezení u vína",
@@ -56,6 +68,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
 
   // New slot form state
@@ -74,15 +87,35 @@ export default function AdminPage() {
 
   async function fetchData() {
     try {
-      const [slotsRes, reservationsRes] = await Promise.all([
+      const [slotsRes, reservationsRes, suggestionsRes] = await Promise.all([
         fetch("/api/slots?all=true"),
         fetch("/api/reservations"),
+        fetch("/api/suggestions"),
       ]);
       if (slotsRes.ok) setSlots(await slotsRes.json());
       if (reservationsRes.ok) setReservations(await reservationsRes.json());
+      if (suggestionsRes.ok) setSuggestions(await suggestionsRes.json());
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSuggestionAction(id: string, status: "approved" | "rejected") {
+    const res = await fetch("/api/suggestions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    if (res.ok) fetchData();
+  }
+
+  async function handleDeleteSuggestion(id: string) {
+    const res = await fetch("/api/suggestions", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) fetchData();
   }
 
   async function handleCreateSlot(e: React.FormEvent) {
@@ -427,6 +460,59 @@ export default function AdminPage() {
                   </div>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* ── Suggestions section ── */}
+        {suggestions.filter((s) => s.status === "pending").length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">
+              💡 Návrhy termínů od kamarádů ({suggestions.filter((s) => s.status === "pending").length})
+            </h2>
+            <div className="space-y-3">
+              {suggestions
+                .filter((s) => s.status === "pending")
+                .map((s) => (
+                  <div
+                    key={s.id}
+                    className="bg-white/80 backdrop-blur-sm rounded-xl shadow border border-purple-200 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-800">{s.name}</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          📅 {formatDate(s.date)} · {formatTime(s.time_from)}–{formatTime(s.time_to)}
+                        </p>
+                        <p className="text-sm text-gray-600">{s.activity}</p>
+                        {s.note && (
+                          <p className="text-sm text-gray-500 mt-1 italic">„{s.note}"</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleSuggestionAction(s.id, "approved")}
+                          className="px-3 py-2 rounded-xl text-sm font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                          title="Schválit a vytvořit blok"
+                        >
+                          ✅ Schválit
+                        </button>
+                        <button
+                          onClick={() => handleSuggestionAction(s.id, "rejected")}
+                          className="px-3 py-2 rounded-xl text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                        >
+                          ✕
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSuggestion(s.id)}
+                          className="px-3 py-2 rounded-xl text-sm text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
             </div>
           </section>
         )}

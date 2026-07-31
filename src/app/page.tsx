@@ -44,15 +44,6 @@ function toDateStr(d: Date): string {
 }
 
 const DAY_NAMES = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
-const DAY_NAMES_LONG = [
-  "Pondělí",
-  "Úterý",
-  "Středa",
-  "Čtvrtek",
-  "Pátek",
-  "Sobota",
-  "Neděle",
-];
 
 /* ── Component ── */
 
@@ -66,6 +57,19 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
+
+  // Suggestion form state
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [sugName, setSugName] = useState("");
+  const [sugDate, setSugDate] = useState("");
+  const [sugTimeFrom, setSugTimeFrom] = useState("");
+  const [sugTimeTo, setSugTimeTo] = useState("");
+  const [sugActivity, setSugActivity] = useState("☕ Káva / Procházka");
+  const [sugCustomActivity, setSugCustomActivity] = useState("");
+  const [sugNote, setSugNote] = useState("");
+  const [sugSubmitting, setSugSubmitting] = useState(false);
+  const [sugSuccess, setSugSuccess] = useState(false);
+  const [sugError, setSugError] = useState("");
 
   useEffect(() => {
     fetchSlots();
@@ -111,13 +115,51 @@ export default function Home() {
     }
   }
 
-  // Week days array
+  async function handleSuggestion(e: React.FormEvent) {
+    e.preventDefault();
+    setSugSubmitting(true);
+    setSugError("");
+    try {
+      const activity =
+        sugActivity === "custom" ? `✏️ ${sugCustomActivity}` : sugActivity;
+      const res = await fetch("/api/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: sugName.trim(),
+          date: sugDate,
+          time_from: sugTimeFrom,
+          time_to: sugTimeTo,
+          activity,
+          note: sugNote.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setSugSuccess(true);
+        setSugName("");
+        setSugDate("");
+        setSugTimeFrom("");
+        setSugTimeTo("");
+        setSugActivity("☕ Káva / Procházka");
+        setSugCustomActivity("");
+        setSugNote("");
+      } else {
+        const data = await res.json();
+        setSugError(data.error || "Chyba při odesílání");
+      }
+    } catch {
+      setSugError("Nepodařilo se odeslat návrh");
+    } finally {
+      setSugSubmitting(false);
+    }
+  }
+
+  // Computed values
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
     [weekStart]
   );
 
-  // Group slots by date
   const slotsByDate = useMemo(() => {
     const map: Record<string, Slot[]> = {};
     for (const slot of slots) {
@@ -126,14 +168,12 @@ export default function Home() {
     return map;
   }, [slots]);
 
-  // Check if any slots exist in current week
   const weekHasSlots = weekDays.some(
     (d) => (slotsByDate[toDateStr(d)] ?? []).length > 0
   );
 
   const today = toDateStr(new Date());
 
-  // Format week range for header
   const weekLabel = `${weekDays[0].toLocaleDateString("cs-CZ", { day: "numeric", month: "short" })} – ${weekDays[6].toLocaleDateString("cs-CZ", { day: "numeric", month: "short", year: "numeric" })}`;
 
   return (
@@ -194,40 +234,25 @@ export default function Home() {
                           : "border-white/40 bg-white/70 shadow-sm"
                       }`}
                   >
-                    {/* Day header */}
                     <div
                       className={`text-center py-2 border-b ${
-                        isToday
-                          ? "border-rose-200 bg-rose-100/50"
-                          : "border-gray-100"
+                        isToday ? "border-rose-200 bg-rose-100/50" : "border-gray-100"
                       } rounded-t-2xl`}
                     >
-                      <p
-                        className={`text-xs font-medium ${
-                          isToday ? "text-rose-600" : "text-gray-400"
-                        }`}
-                      >
+                      <p className={`text-xs font-medium ${isToday ? "text-rose-600" : "text-gray-400"}`}>
                         {DAY_NAMES[i]}
                       </p>
-                      <p
-                        className={`text-lg font-bold ${
-                          isToday ? "text-rose-600" : "text-gray-700"
-                        }`}
-                      >
+                      <p className={`text-lg font-bold ${isToday ? "text-rose-600" : "text-gray-700"}`}>
                         {day.getDate()}.
                       </p>
                     </div>
 
-                    {/* Slots in this day */}
                     <div className="flex-1 p-1.5 space-y-1.5">
                       {daySlots.length === 0 && !isPast && (
-                        <p className="text-[10px] text-gray-300 text-center mt-4">
-                          —
-                        </p>
+                        <p className="text-[10px] text-gray-300 text-center mt-4">—</p>
                       )}
                       {daySlots.map((slot) => {
-                        const available =
-                          slot.max_persons - slot.approved_count;
+                        const available = slot.max_persons - slot.approved_count;
                         const isFull = available <= 0;
                         const isSubmitted = submitted.has(slot.id);
 
@@ -236,9 +261,7 @@ export default function Home() {
                             key={slot.id}
                             onClick={() => {
                               if (!isFull && !isSubmitted && !isPast) {
-                                setSelectedSlot(
-                                  selectedSlot === slot.id ? null : slot.id
-                                );
+                                setSelectedSlot(selectedSlot === slot.id ? null : slot.id);
                                 setError("");
                               }
                             }}
@@ -251,12 +274,10 @@ export default function Home() {
                                   : isFull
                                     ? "bg-gray-100 text-gray-400"
                                     : "bg-gradient-to-r from-purple-50 to-rose-50 hover:from-purple-100 hover:to-rose-100 border border-purple-100 cursor-pointer hover:shadow-sm"
-                              }
-                              disabled:cursor-default`}
+                              } disabled:cursor-default`}
                           >
                             <p className="font-semibold text-gray-700 truncate">
-                              {formatTime(slot.time_from)}–
-                              {formatTime(slot.time_to)}
+                              {formatTime(slot.time_from)}–{formatTime(slot.time_to)}
                             </p>
                             <p className="truncate mt-0.5">{slot.activity}</p>
                             <p className="mt-0.5">
@@ -279,78 +300,124 @@ export default function Home() {
               })}
             </div>
 
-            {/* No slots hint */}
             {!weekHasSlots && (
               <div className="text-center py-8 mt-4">
-                <p className="text-gray-400">
-                  V tomto týdnu nejsou žádné termíny 🌸
-                </p>
-                <p className="text-gray-300 text-sm mt-1">
-                  Zkus přepnout na další týden →
-                </p>
+                <p className="text-gray-400">V tomto týdnu nejsou žádné termíny 🌸</p>
+                <p className="text-gray-300 text-sm mt-1">Zkus přepnout na další týden →</p>
               </div>
             )}
 
-            {/* Booking form (modal-like bottom panel) */}
+            {/* ── Suggest a time section ── */}
+            <div className="mt-10">
+              {!showSuggestion && !sugSuccess && (
+                <div className="text-center">
+                  <p className="text-gray-400 text-sm mb-3">Nevyhovuje ti žádný termín?</p>
+                  <button
+                    onClick={() => setShowSuggestion(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200 text-purple-600 font-medium hover:bg-purple-50 hover:shadow-md transition-all"
+                  >
+                    💡 Navrhnout vlastní termín
+                  </button>
+                </div>
+              )}
+
+              {sugSuccess && (
+                <div className="text-center py-6 bg-emerald-50/80 rounded-2xl border border-emerald-200 animate-fade-in">
+                  <p className="text-2xl mb-2">✅</p>
+                  <p className="text-emerald-700 font-medium">Návrh odeslán!</p>
+                  <p className="text-emerald-600 text-sm mt-1">Lenka ho posoudí a dá ti vědět.</p>
+                  <button
+                    onClick={() => { setSugSuccess(false); setShowSuggestion(false); }}
+                    className="mt-3 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    Zavřít
+                  </button>
+                </div>
+              )}
+
+              {showSuggestion && !sugSuccess && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200 p-6 animate-fade-in">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-gray-800">💡 Navrhnout termín</h2>
+                    <button
+                      onClick={() => setShowSuggestion(false)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <form onSubmit={handleSuggestion} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <label className="text-sm text-gray-500 mb-1 block">Tvoje jméno *</label>
+                      <input type="text" value={sugName} onChange={(e) => setSugName(e.target.value)} required placeholder="Jméno a příjmení" className="input-field" />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">Navrhované datum *</label>
+                      <input type="date" value={sugDate} onChange={(e) => setSugDate(e.target.value)} required className="input-field" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-sm text-gray-500 mb-1 block">Od *</label>
+                        <input type="time" value={sugTimeFrom} onChange={(e) => setSugTimeFrom(e.target.value)} required className="input-field" />
+                      </div>
+                      <div>
+                        <label className="text-sm text-gray-500 mb-1 block">Do *</label>
+                        <input type="time" value={sugTimeTo} onChange={(e) => setSugTimeTo(e.target.value)} required className="input-field" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">Aktivita</label>
+                      <select value={sugActivity} onChange={(e) => setSugActivity(e.target.value)} className="input-field">
+                        <option value="☕ Káva / Procházka">☕ Káva / Procházka</option>
+                        <option value="🍷 Posezení u vína">🍷 Posezení u vína</option>
+                        <option value="custom">✏️ Vlastní…</option>
+                      </select>
+                    </div>
+                    {sugActivity === "custom" && (
+                      <div className="animate-fade-in">
+                        <label className="text-sm text-gray-500 mb-1 block">Vlastní aktivita *</label>
+                        <input type="text" value={sugCustomActivity} onChange={(e) => setSugCustomActivity(e.target.value)} required placeholder="Např. Piknik v parku 🧺" className="input-field" />
+                      </div>
+                    )}
+                    <div className="sm:col-span-2">
+                      <label className="text-sm text-gray-500 mb-1 block">Poznámka (volitelné)</label>
+                      <textarea value={sugNote} onChange={(e) => setSugNote(e.target.value)} rows={2} placeholder="Např. Mohl/a bych i dříve…" className="input-field resize-none" />
+                    </div>
+                    {sugError && <p className="sm:col-span-2 text-red-500 text-sm">{sugError}</p>}
+                    <div className="sm:col-span-2">
+                      <button type="submit" disabled={sugSubmitting || !sugName.trim()} className="btn-primary w-full">
+                        {sugSubmitting ? "Odesílám…" : "Odeslat návrh termínu"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* Booking form (bottom sheet) */}
             {selectedSlot && (() => {
               const slot = slots.find((s) => s.id === selectedSlot);
               if (!slot) return null;
-
               return (
                 <div className="fixed inset-x-0 bottom-0 z-50 animate-fade-in">
                   <div className="max-w-lg mx-auto p-4">
                     <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-rose-200 p-5">
-                      {/* Slot info */}
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <p className="text-sm text-gray-500">
-                            {new Date(slot.date + "T00:00:00").toLocaleDateString("cs-CZ", {
-                              weekday: "long",
-                              day: "numeric",
-                              month: "long",
-                            })}
+                            {new Date(slot.date + "T00:00:00").toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" })}
                           </p>
                           <p className="font-semibold text-gray-800">
-                            {formatTime(slot.time_from)}–
-                            {formatTime(slot.time_to)} · {slot.activity}
+                            {formatTime(slot.time_from)}–{formatTime(slot.time_to)} · {slot.activity}
                           </p>
                         </div>
-                        <button
-                          onClick={() => {
-                            setSelectedSlot(null);
-                            setError("");
-                          }}
-                          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
-                        >
-                          ✕
-                        </button>
+                        <button onClick={() => { setSelectedSlot(null); setError(""); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors">✕</button>
                       </div>
-
-                      {/* Form */}
                       <div className="space-y-3">
-                        <input
-                          type="text"
-                          placeholder="Jméno a příjmení *"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="input-field"
-                          autoFocus
-                        />
-                        <textarea
-                          placeholder="Poznámka (volitelné)"
-                          value={note}
-                          onChange={(e) => setNote(e.target.value)}
-                          rows={2}
-                          className="input-field resize-none"
-                        />
-                        {error && (
-                          <p className="text-red-500 text-sm">{error}</p>
-                        )}
-                        <button
-                          onClick={() => handleSubmit(slot.id)}
-                          disabled={submitting || !name.trim()}
-                          className="btn-primary w-full"
-                        >
+                        <input type="text" placeholder="Jméno a příjmení *" value={name} onChange={(e) => setName(e.target.value)} className="input-field" autoFocus />
+                        <textarea placeholder="Poznámka (volitelné)" value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="input-field resize-none" />
+                        {error && <p className="text-red-500 text-sm">{error}</p>}
+                        <button onClick={() => handleSubmit(slot.id)} disabled={submitting || !name.trim()} className="btn-primary w-full">
                           {submitting ? "Odesílám…" : "Odeslat rezervaci"}
                         </button>
                       </div>
@@ -360,22 +427,13 @@ export default function Home() {
               );
             })()}
 
-            {/* Overlay when form is open */}
             {selectedSlot && (
-              <div
-                className="fixed inset-0 bg-black/20 z-40"
-                onClick={() => {
-                  setSelectedSlot(null);
-                  setError("");
-                }}
-              />
+              <div className="fixed inset-0 bg-black/20 z-40" onClick={() => { setSelectedSlot(null); setError(""); }} />
             )}
           </>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-10 pb-8">
-          Made with 💕
-        </p>
+        <p className="text-center text-xs text-gray-400 mt-10 pb-8">Made with 💕</p>
       </div>
     </main>
   );
