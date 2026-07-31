@@ -43,7 +43,8 @@ function toDateStr(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
-const DAY_NAMES = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
+const DAY_NAMES_SHORT = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
+const DAY_NAMES_LONG = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 
 /* ── Component ── */
 
@@ -58,7 +59,7 @@ export default function Home() {
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
 
-  // Suggestion form state
+  // Suggestion form
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [sugName, setSugName] = useState("");
   const [sugDate, setSugDate] = useState("");
@@ -71,17 +72,13 @@ export default function Home() {
   const [sugSuccess, setSugSuccess] = useState(false);
   const [sugError, setSugError] = useState("");
 
-  useEffect(() => {
-    fetchSlots();
-  }, []);
+  useEffect(() => { fetchSlots(); }, []);
 
   async function fetchSlots() {
     try {
       const res = await fetch("/api/slots");
       if (res.ok) setSlots(await res.json());
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   async function handleSubmit(slotId: string) {
@@ -92,11 +89,7 @@ export default function Home() {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slot_id: slotId,
-          name: name.trim(),
-          note: note.trim() || null,
-        }),
+        body: JSON.stringify({ slot_id: slotId, name: name.trim(), note: note.trim() || null }),
       });
       if (res.ok) {
         setSubmitted((prev) => new Set(prev).add(slotId));
@@ -108,11 +101,8 @@ export default function Home() {
         const data = await res.json();
         setError(data.error || "Chyba při odesílání");
       }
-    } catch {
-      setError("Nepodařilo se odeslat rezervaci");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setError("Nepodařilo se odeslat rezervaci"); }
+    finally { setSubmitting(false); }
   }
 
   async function handleSuggestion(e: React.FormEvent) {
@@ -120,103 +110,85 @@ export default function Home() {
     setSugSubmitting(true);
     setSugError("");
     try {
-      const activity =
-        sugActivity === "custom" ? `✏️ ${sugCustomActivity}` : sugActivity;
+      const activity = sugActivity === "custom" ? `✏️ ${sugCustomActivity}` : sugActivity;
       const res = await fetch("/api/suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: sugName.trim(),
-          date: sugDate,
-          time_from: sugTimeFrom,
-          time_to: sugTimeTo,
-          activity,
-          note: sugNote.trim() || null,
-        }),
+        body: JSON.stringify({ name: sugName.trim(), date: sugDate, time_from: sugTimeFrom, time_to: sugTimeTo, activity, note: sugNote.trim() || null }),
       });
       if (res.ok) {
         setSugSuccess(true);
-        setSugName("");
-        setSugDate("");
-        setSugTimeFrom("");
-        setSugTimeTo("");
-        setSugActivity("☕ Káva / Procházka");
-        setSugCustomActivity("");
-        setSugNote("");
+        setSugName(""); setSugDate(""); setSugTimeFrom(""); setSugTimeTo("");
+        setSugActivity("☕ Káva / Procházka"); setSugCustomActivity(""); setSugNote("");
       } else {
         const data = await res.json();
         setSugError(data.error || "Chyba při odesílání");
       }
-    } catch {
-      setSugError("Nepodařilo se odeslat návrh");
-    } finally {
-      setSugSubmitting(false);
-    }
+    } catch { setSugError("Nepodařilo se odeslat návrh"); }
+    finally { setSugSubmitting(false); }
   }
 
-  // Computed values
-  const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
-    [weekStart]
-  );
-
+  // Computed
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
   const slotsByDate = useMemo(() => {
     const map: Record<string, Slot[]> = {};
-    for (const slot of slots) {
-      (map[slot.date] ??= []).push(slot);
-    }
+    for (const slot of slots) (map[slot.date] ??= []).push(slot);
     return map;
   }, [slots]);
-
-  const weekHasSlots = weekDays.some(
-    (d) => (slotsByDate[toDateStr(d)] ?? []).length > 0
-  );
-
+  const weekHasSlots = weekDays.some((d) => (slotsByDate[toDateStr(d)] ?? []).length > 0);
   const today = toDateStr(new Date());
-
   const weekLabel = `${weekDays[0].toLocaleDateString("cs-CZ", { day: "numeric", month: "short" })} – ${weekDays[6].toLocaleDateString("cs-CZ", { day: "numeric", month: "short", year: "numeric" })}`;
 
   return (
-    <main className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen px-4 py-6 md:px-8 md:py-10 lg:px-12">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8 pt-6">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+        <div className="text-center mb-8 md:mb-12 pt-2 md:pt-6 flex flex-col items-center">
+          <div className="relative mb-5 group">
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-rose-400 via-pink-400 to-purple-500 rounded-full blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
+            <img
+              src="/lenka.jpg"
+              alt="Lenka"
+              className="relative w-36 h-36 sm:w-44 sm:h-44 object-cover rounded-full border-4 border-white shadow-xl transform transition duration-300 hover:scale-105"
+            />
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
             Lenka
           </h1>
-          <p className="text-gray-500 mt-3 text-lg">
+          <p className="text-gray-600 mt-3 text-base sm:text-lg lg:text-xl max-w-md mx-auto font-medium">
             Ahoj! Tady si můžeš zarezervovat čas, kdy se konečně uvidíme. 💕
           </p>
+          <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-rose-100/80 border border-rose-200/60 text-rose-700 text-sm font-semibold shadow-sm animate-fade-in">
+            <span>✨ Už se na vás moc těším!</span>
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-16">
-            <div className="inline-block w-8 h-8 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
-            <p className="text-gray-400 mt-4">Načítám termíny…</p>
+          <div className="text-center py-20">
+            <div className="inline-block w-10 h-10 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+            <p className="text-gray-400 mt-4 text-sm">Načítám termíny…</p>
           </div>
         ) : (
           <>
             {/* Week navigation */}
-            <div className="flex items-center justify-between mb-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-sm px-4 py-3">
+            <div className="flex items-center justify-between mb-5 md:mb-6 card px-3 py-2.5 sm:px-5 sm:py-3">
               <button
                 onClick={() => setWeekStart(addDays(weekStart, -7))}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium"
+                className="p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium text-sm sm:text-base"
               >
-                ← Předchozí
+                ← <span className="hidden sm:inline">Předchozí</span>
               </button>
-              <span className="text-sm font-semibold text-gray-700">
-                {weekLabel}
-              </span>
+              <span className="text-xs sm:text-sm font-semibold text-gray-700">{weekLabel}</span>
               <button
                 onClick={() => setWeekStart(addDays(weekStart, 7))}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium"
+                className="p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium text-sm sm:text-base"
               >
-                Další →
+                <span className="hidden sm:inline">Další</span> →
               </button>
             </div>
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+            {/* Calendar grid – responsive: 2 col mobile, 4 col tablet, 7 col desktop */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3">
               {weekDays.map((day, i) => {
                 const dateStr = toDateStr(day);
                 const daySlots = slotsByDate[dateStr] ?? [];
@@ -226,30 +198,29 @@ export default function Home() {
                 return (
                   <div
                     key={dateStr}
-                    className={`rounded-2xl border transition-all min-h-[140px] flex flex-col
+                    className={`rounded-2xl border transition-all min-h-[130px] sm:min-h-[150px] lg:min-h-[170px] flex flex-col
                       ${isToday
-                        ? "border-rose-300 bg-rose-50/80 shadow-md shadow-rose-100/50"
+                        ? "border-rose-300 bg-rose-50/80 shadow-md shadow-rose-100/50 ring-1 ring-rose-200"
                         : isPast
                           ? "border-gray-100 bg-gray-50/50 opacity-50"
-                          : "border-white/40 bg-white/70 shadow-sm"
+                          : "border-white/40 bg-white/70 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-transform"
                       }`}
                   >
-                    <div
-                      className={`text-center py-2 border-b ${
-                        isToday ? "border-rose-200 bg-rose-100/50" : "border-gray-100"
-                      } rounded-t-2xl`}
-                    >
-                      <p className={`text-xs font-medium ${isToday ? "text-rose-600" : "text-gray-400"}`}>
-                        {DAY_NAMES[i]}
+                    {/* Day header */}
+                    <div className={`text-center py-2 lg:py-2.5 border-b ${isToday ? "border-rose-200 bg-rose-100/50" : "border-gray-100"} rounded-t-2xl`}>
+                      <p className={`text-[10px] sm:text-xs font-medium uppercase tracking-wide ${isToday ? "text-rose-600" : "text-gray-400"}`}>
+                        <span className="lg:hidden">{DAY_NAMES_SHORT[i]}</span>
+                        <span className="hidden lg:inline">{DAY_NAMES_LONG[i]}</span>
                       </p>
-                      <p className={`text-lg font-bold ${isToday ? "text-rose-600" : "text-gray-700"}`}>
+                      <p className={`text-base sm:text-lg font-bold ${isToday ? "text-rose-600" : "text-gray-700"}`}>
                         {day.getDate()}.
                       </p>
                     </div>
 
-                    <div className="flex-1 p-1.5 space-y-1.5">
+                    {/* Slots */}
+                    <div className="flex-1 p-1.5 sm:p-2 space-y-1.5">
                       {daySlots.length === 0 && !isPast && (
-                        <p className="text-[10px] text-gray-300 text-center mt-4">—</p>
+                        <p className="text-[10px] text-gray-300 text-center mt-6 sm:mt-8">—</p>
                       )}
                       {daySlots.map((slot) => {
                         const available = slot.max_persons - slot.approved_count;
@@ -266,9 +237,9 @@ export default function Home() {
                               }
                             }}
                             disabled={isFull || isSubmitted || isPast}
-                            className={`w-full text-left p-2 rounded-xl text-[11px] leading-tight transition-all
+                            className={`w-full text-left p-2 sm:p-2.5 rounded-xl text-[11px] sm:text-xs leading-tight transition-all
                               ${selectedSlot === slot.id
-                                ? "bg-rose-100 ring-2 ring-rose-400 shadow-sm"
+                                ? "bg-rose-100 ring-2 ring-rose-400 shadow-sm scale-[1.02]"
                                 : isSubmitted
                                   ? "bg-amber-50 border border-amber-200"
                                   : isFull
@@ -286,9 +257,7 @@ export default function Home() {
                               ) : isFull ? (
                                 <span className="text-gray-400">Obsazeno</span>
                               ) : (
-                                <span className="text-emerald-600">
-                                  {available} {spotsLabel(available)}
-                                </span>
+                                <span className="text-emerald-600 font-medium">{available} {spotsLabel(available)}</span>
                               )}
                             </p>
                           </button>
@@ -301,20 +270,20 @@ export default function Home() {
             </div>
 
             {!weekHasSlots && (
-              <div className="text-center py-8 mt-4">
-                <p className="text-gray-400">V tomto týdnu nejsou žádné termíny 🌸</p>
+              <div className="text-center py-10 mt-4">
+                <p className="text-gray-400 text-base">V tomto týdnu nejsou žádné termíny 🌸</p>
                 <p className="text-gray-300 text-sm mt-1">Zkus přepnout na další týden →</p>
               </div>
             )}
 
-            {/* ── Suggest a time section ── */}
-            <div className="mt-10">
+            {/* ── Suggest a time ── */}
+            <div className="mt-10 md:mt-14 max-w-2xl mx-auto">
               {!showSuggestion && !sugSuccess && (
                 <div className="text-center">
                   <p className="text-gray-400 text-sm mb-3">Nevyhovuje ti žádný termín?</p>
                   <button
                     onClick={() => setShowSuggestion(true)}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200 text-purple-600 font-medium hover:bg-purple-50 hover:shadow-md transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200 text-purple-600 font-medium hover:bg-purple-50 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
                   >
                     💡 Navrhnout vlastní termín
                   </button>
@@ -322,13 +291,13 @@ export default function Home() {
               )}
 
               {sugSuccess && (
-                <div className="text-center py-6 bg-emerald-50/80 rounded-2xl border border-emerald-200 animate-fade-in">
-                  <p className="text-2xl mb-2">✅</p>
-                  <p className="text-emerald-700 font-medium">Návrh odeslán!</p>
+                <div className="text-center py-8 card border-emerald-200 bg-emerald-50/80 animate-fade-in">
+                  <p className="text-3xl mb-2">✅</p>
+                  <p className="text-emerald-700 font-medium text-lg">Návrh odeslán!</p>
                   <p className="text-emerald-600 text-sm mt-1">Lenka ho posoudí a dá ti vědět.</p>
                   <button
                     onClick={() => { setSugSuccess(false); setShowSuggestion(false); }}
-                    className="mt-3 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                    className="mt-4 text-sm text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                   >
                     Zavřít
                   </button>
@@ -336,37 +305,32 @@ export default function Home() {
               )}
 
               {showSuggestion && !sugSuccess && (
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200 p-6 animate-fade-in">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-800">💡 Navrhnout termín</h2>
-                    <button
-                      onClick={() => setShowSuggestion(false)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
-                    >
-                      ✕
-                    </button>
+                <div className="card border-purple-200 p-5 sm:p-6 lg:p-8 animate-fade-in">
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">💡 Navrhnout termín</h2>
+                    <button onClick={() => setShowSuggestion(false)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors cursor-pointer">✕</button>
                   </div>
                   <form onSubmit={handleSuggestion} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="sm:col-span-2">
-                      <label className="text-sm text-gray-500 mb-1 block">Tvoje jméno *</label>
+                      <label className="text-sm text-gray-500 mb-1.5 block">Tvoje jméno *</label>
                       <input type="text" value={sugName} onChange={(e) => setSugName(e.target.value)} required placeholder="Jméno a příjmení" className="input-field" />
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 mb-1 block">Navrhované datum *</label>
+                      <label className="text-sm text-gray-500 mb-1.5 block">Navrhované datum *</label>
                       <input type="date" value={sugDate} onChange={(e) => setSugDate(e.target.value)} required className="input-field" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-sm text-gray-500 mb-1 block">Od *</label>
+                        <label className="text-sm text-gray-500 mb-1.5 block">Od *</label>
                         <input type="time" value={sugTimeFrom} onChange={(e) => setSugTimeFrom(e.target.value)} required className="input-field" />
                       </div>
                       <div>
-                        <label className="text-sm text-gray-500 mb-1 block">Do *</label>
+                        <label className="text-sm text-gray-500 mb-1.5 block">Do *</label>
                         <input type="time" value={sugTimeTo} onChange={(e) => setSugTimeTo(e.target.value)} required className="input-field" />
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 mb-1 block">Aktivita</label>
+                      <label className="text-sm text-gray-500 mb-1.5 block">Aktivita</label>
                       <select value={sugActivity} onChange={(e) => setSugActivity(e.target.value)} className="input-field">
                         <option value="☕ Káva / Procházka">☕ Káva / Procházka</option>
                         <option value="🍷 Posezení u vína">🍷 Posezení u vína</option>
@@ -375,12 +339,12 @@ export default function Home() {
                     </div>
                     {sugActivity === "custom" && (
                       <div className="animate-fade-in">
-                        <label className="text-sm text-gray-500 mb-1 block">Vlastní aktivita *</label>
+                        <label className="text-sm text-gray-500 mb-1.5 block">Vlastní aktivita *</label>
                         <input type="text" value={sugCustomActivity} onChange={(e) => setSugCustomActivity(e.target.value)} required placeholder="Např. Piknik v parku 🧺" className="input-field" />
                       </div>
                     )}
                     <div className="sm:col-span-2">
-                      <label className="text-sm text-gray-500 mb-1 block">Poznámka (volitelné)</label>
+                      <label className="text-sm text-gray-500 mb-1.5 block">Poznámka (volitelné)</label>
                       <textarea value={sugNote} onChange={(e) => setSugNote(e.target.value)} rows={2} placeholder="Např. Mohl/a bych i dříve…" className="input-field resize-none" />
                     </div>
                     {sugError && <p className="sm:col-span-2 text-red-500 text-sm">{sugError}</p>}
@@ -394,24 +358,24 @@ export default function Home() {
               )}
             </div>
 
-            {/* Booking form (bottom sheet) */}
+            {/* Booking bottom sheet */}
             {selectedSlot && (() => {
               const slot = slots.find((s) => s.id === selectedSlot);
               if (!slot) return null;
               return (
-                <div className="fixed inset-x-0 bottom-0 z-50 animate-fade-in">
+                <div className="fixed inset-x-0 bottom-0 z-50 animate-slide-up">
                   <div className="max-w-lg mx-auto p-4">
-                    <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-rose-200 p-5">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-rose-200 p-5 sm:p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <p className="text-sm text-gray-500">
                             {new Date(slot.date + "T00:00:00").toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" })}
                           </p>
-                          <p className="font-semibold text-gray-800">
+                          <p className="font-semibold text-gray-800 text-base sm:text-lg">
                             {formatTime(slot.time_from)}–{formatTime(slot.time_to)} · {slot.activity}
                           </p>
                         </div>
-                        <button onClick={() => { setSelectedSlot(null); setError(""); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors">✕</button>
+                        <button onClick={() => { setSelectedSlot(null); setError(""); }} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors cursor-pointer">✕</button>
                       </div>
                       <div className="space-y-3">
                         <input type="text" placeholder="Jméno a příjmení *" value={name} onChange={(e) => setName(e.target.value)} className="input-field" autoFocus />
@@ -428,12 +392,12 @@ export default function Home() {
             })()}
 
             {selectedSlot && (
-              <div className="fixed inset-0 bg-black/20 z-40" onClick={() => { setSelectedSlot(null); setError(""); }} />
+              <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40" onClick={() => { setSelectedSlot(null); setError(""); }} />
             )}
           </>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-10 pb-8">Made with 💕</p>
+        <p className="text-center text-xs text-gray-400 mt-12 pb-6">Made with 💕</p>
       </div>
     </main>
   );
