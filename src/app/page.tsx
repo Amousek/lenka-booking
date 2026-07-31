@@ -185,7 +185,7 @@ export default function Home() {
             Lenka
           </h1>
           <p className="text-gray-500 mt-3 text-lg">
-            Vyber si volný termín a zarezervuj se 💕
+            Ahoj! Tady si můžeš zarezervovat čas, kdy se konečně uvidíme. 💕
           </p>
         </div>
 
