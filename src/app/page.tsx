@@ -404,7 +404,13 @@ export default function Home() {
           </>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-12 pb-6">Made with 🙈</p>
+        <footer className="text-center text-xs text-gray-400 mt-12 pb-6 flex items-center justify-center gap-3">
+          <span>Made with 🙈</span>
+          <span>·</span>
+          <a href="/admin" className="hover:text-violet-600 font-medium transition-colors">
+            🔐 Admin panel
+          </a>
+        </footer>
       </div>
     </main>
   );

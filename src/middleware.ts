@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  // Allow the login page through
-  if (request.nextUrl.pathname === "/admin/login") {
+  const { pathname } = request.nextUrl;
+
+  // Always allow the login page
+  if (pathname === "/admin/login") {
     return NextResponse.next();
   }
 
   const adminToken = request.cookies.get("admin_token")?.value;
+  const expectedSecret = process.env.ADMIN_SECRET || "lenka-booking-secret-2026-xyz";
 
-  if (adminToken !== process.env.ADMIN_SECRET) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+  if (adminToken !== expectedSecret) {
+    const loginUrl = new URL("/admin/login", request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*"],
 };

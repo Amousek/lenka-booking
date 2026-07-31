@@ -49,7 +49,7 @@ export async function notifyAdminNewReservation(data: {
             <tr><td style="padding: 8px 0; color: #666;">Aktivita:</td><td style="padding: 8px 0;">${data.slotActivity}</td></tr>
             ${data.note ? `<tr><td style="padding: 8px 0; color: #666;">Poznámka:</td><td style="padding: 8px 0; font-style: italic;">„${data.note}"</td></tr>` : ""}
           </table>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="https://lenka-booking.vercel.app/admin" style="color: #3B00DB;">Admin panelu</a> pro schválení.</p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="https://lenka-booking.vercel.app/admin/login" style="color: #3B00DB; font-weight: bold;">Admin panelu</a> pro schválení.</p>
         </div>
       `,
     });
@@ -85,7 +85,7 @@ export async function notifyAdminNewSuggestion(data: {
             <tr><td style="padding: 8px 0; color: #666;">Aktivita:</td><td style="padding: 8px 0;">${data.activity}</td></tr>
             ${data.note ? `<tr><td style="padding: 8px 0; color: #666;">Poznámka:</td><td style="padding: 8px 0; font-style: italic;">„${data.note}"</td></tr>` : ""}
           </table>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="https://lenka-booking.vercel.app/admin" style="color: #3B00DB;">Admin panelu</a> pro posouzení.</p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="https://lenka-booking.vercel.app/admin/login" style="color: #3B00DB; font-weight: bold;">Admin panelu</a> pro posouzení.</p>
         </div>
       `,
     });
