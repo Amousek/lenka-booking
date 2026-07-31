@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
+}
 
 const FROM_EMAIL = "Lenka Booking <onboarding@resend.dev>";
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").filter(Boolean);
@@ -28,7 +32,8 @@ export async function notifyAdminNewReservation(data: {
   slotTime: string;
   slotActivity: string;
 }) {
-  if (!ADMIN_EMAILS.length) return;
+  const resend = getResend();
+  if (!resend || !ADMIN_EMAILS.length) return;
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -44,7 +49,7 @@ export async function notifyAdminNewReservation(data: {
             <tr><td style="padding: 8px 0; color: #666;">Aktivita:</td><td style="padding: 8px 0;">${data.slotActivity}</td></tr>
             ${data.note ? `<tr><td style="padding: 8px 0; color: #666;">Poznámka:</td><td style="padding: 8px 0; font-style: italic;">„${data.note}"</td></tr>` : ""}
           </table>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="${process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "https://lenka-booking.vercel.app"}/admin" style="color: #3B00DB;">Admin panelu</a> pro schválení.</p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="https://lenka-booking.vercel.app/admin" style="color: #3B00DB;">Admin panelu</a> pro schválení.</p>
         </div>
       `,
     });
@@ -62,7 +67,8 @@ export async function notifyAdminNewSuggestion(data: {
   activity: string;
   note?: string;
 }) {
-  if (!ADMIN_EMAILS.length) return;
+  const resend = getResend();
+  if (!resend || !ADMIN_EMAILS.length) return;
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -79,7 +85,7 @@ export async function notifyAdminNewSuggestion(data: {
             <tr><td style="padding: 8px 0; color: #666;">Aktivita:</td><td style="padding: 8px 0;">${data.activity}</td></tr>
             ${data.note ? `<tr><td style="padding: 8px 0; color: #666;">Poznámka:</td><td style="padding: 8px 0; font-style: italic;">„${data.note}"</td></tr>` : ""}
           </table>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="${process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "https://lenka-booking.vercel.app"}/admin" style="color: #3B00DB;">Admin panelu</a> pro posouzení.</p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">Přejdi do <a href="https://lenka-booking.vercel.app/admin" style="color: #3B00DB;">Admin panelu</a> pro posouzení.</p>
         </div>
       `,
     });
@@ -99,6 +105,9 @@ export async function notifyUserReservationStatus(data: {
   slotActivity: string;
 }) {
   if (!data.email) return;
+  const resend = getResend();
+  if (!resend) return;
+
   const isApproved = data.status === "approved";
   try {
     await resend.emails.send({
@@ -140,6 +149,9 @@ export async function notifyUserSuggestionStatus(data: {
   activity: string;
 }) {
   if (!data.email) return;
+  const resend = getResend();
+  if (!resend) return;
+
   const isApproved = data.status === "approved";
   try {
     await resend.emails.send({
