@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabase } from "@/lib/supabase";
+import { notifyAdminNewSuggestion, notifyUserSuggestionStatus } from "@/lib/email";
 
 function isAdmin(cookieStore: Awaited<ReturnType<typeof cookies>>): boolean {
   return cookieStore.get("admin_token")?.value === process.env.ADMIN_SECRET;
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
     .from("suggestions")
     .insert({
       name: body.name,
+      email: body.email || null,
       date: body.date,
       time_from: body.time_from,
       time_to: body.time_to,
@@ -46,6 +48,18 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Notify admin (non-blocking)
+  notifyAdminNewSuggestion({
+    name: body.name,
+    email: body.email || undefined,
+    date: body.date,
+    timeFrom: body.time_from,
+    timeTo: body.time_to,
+    activity: body.activity,
+    note: body.note || undefined,
+  });
+
   return NextResponse.json(data, { status: 201 });
 }
 
@@ -63,23 +77,22 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Neplatný status" }, { status: 400 });
   }
 
-  // If approving, create a slot from the suggestion
-  if (status === "approved") {
-    const { data: suggestion } = await supabase
-      .from("suggestions")
-      .select("*")
-      .eq("id", id)
-      .single();
+  // Get suggestion details BEFORE updating
+  const { data: suggestion } = await supabase
+    .from("suggestions")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-    if (suggestion) {
-      await supabase.from("slots").insert({
-        date: suggestion.date,
-        time_from: suggestion.time_from,
-        time_to: suggestion.time_to,
-        activity: suggestion.activity,
-        max_persons: 1,
-      });
-    }
+  // If approving, create a slot from the suggestion
+  if (status === "approved" && suggestion) {
+    await supabase.from("slots").insert({
+      date: suggestion.date,
+      time_from: suggestion.time_from,
+      time_to: suggestion.time_to,
+      activity: suggestion.activity,
+      max_persons: 1,
+    });
   }
 
   const { data, error } = await supabase
@@ -92,6 +105,20 @@ export async function PATCH(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Notify the user if they provided an email (non-blocking)
+  if (suggestion?.email) {
+    notifyUserSuggestionStatus({
+      email: suggestion.email,
+      name: suggestion.name,
+      status,
+      date: suggestion.date,
+      timeFrom: suggestion.time_from,
+      timeTo: suggestion.time_to,
+      activity: suggestion.activity,
+    });
+  }
+
   return NextResponse.json(data);
 }
 

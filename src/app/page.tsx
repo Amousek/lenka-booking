@@ -54,6 +54,7 @@ export default function Home() {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
@@ -62,6 +63,7 @@ export default function Home() {
   // Suggestion form
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [sugName, setSugName] = useState("");
+  const [sugEmail, setSugEmail] = useState("");
   const [sugDate, setSugDate] = useState("");
   const [sugTimeFrom, setSugTimeFrom] = useState("");
   const [sugTimeTo, setSugTimeTo] = useState("");
@@ -89,12 +91,13 @@ export default function Home() {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot_id: slotId, name: name.trim(), note: note.trim() || null }),
+        body: JSON.stringify({ slot_id: slotId, name: name.trim(), email: email.trim() || null, note: note.trim() || null }),
       });
       if (res.ok) {
         setSubmitted((prev) => new Set(prev).add(slotId));
         setSelectedSlot(null);
         setName("");
+        setEmail("");
         setNote("");
         fetchSlots();
       } else {
@@ -114,11 +117,11 @@ export default function Home() {
       const res = await fetch("/api/suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: sugName.trim(), date: sugDate, time_from: sugTimeFrom, time_to: sugTimeTo, activity, note: sugNote.trim() || null }),
+        body: JSON.stringify({ name: sugName.trim(), email: sugEmail.trim() || null, date: sugDate, time_from: sugTimeFrom, time_to: sugTimeTo, activity, note: sugNote.trim() || null }),
       });
       if (res.ok) {
         setSugSuccess(true);
-        setSugName(""); setSugDate(""); setSugTimeFrom(""); setSugTimeTo("");
+        setSugName(""); setSugEmail(""); setSugDate(""); setSugTimeFrom(""); setSugTimeTo("");
         setSugActivity("☕ Káva / Procházka"); setSugCustomActivity(""); setSugNote("");
       } else {
         const data = await res.json();
@@ -314,6 +317,10 @@ export default function Home() {
                       <label className="text-sm text-gray-500 mb-1.5 block">Tvoje jméno *</label>
                       <input type="text" value={sugName} onChange={(e) => setSugName(e.target.value)} required placeholder="Jméno a příjmení" className="input-field" />
                     </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-sm text-gray-500 mb-1.5 block">E-mail (pro potvrzení)</label>
+                      <input type="email" value={sugEmail} onChange={(e) => setSugEmail(e.target.value)} placeholder="tvuj@email.cz" className="input-field" />
+                    </div>
                     <div>
                       <label className="text-sm text-gray-500 mb-1.5 block">Navrhované datum *</label>
                       <input type="date" value={sugDate} onChange={(e) => setSugDate(e.target.value)} required className="input-field" />
@@ -378,6 +385,7 @@ export default function Home() {
                       </div>
                       <div className="space-y-3">
                         <input type="text" placeholder="Jméno a příjmení *" value={name} onChange={(e) => setName(e.target.value)} className="input-field" autoFocus />
+                        <input type="email" placeholder="E-mail (pro potvrzení)" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" />
                         <textarea placeholder="Poznámka (volitelné)" value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="input-field resize-none" />
                         {error && <p className="text-red-500 text-sm">{error}</p>}
                         <button onClick={() => handleSubmit(slot.id)} disabled={submitting || !name.trim()} className="btn-primary w-full">
