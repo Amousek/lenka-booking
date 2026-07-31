@@ -39,7 +39,7 @@ export default function AdminLogin() {
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 p-8 w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
           <p className="text-4xl mb-3">🔐</p>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-[#3B00DB] to-[#BF00FF] bg-clip-text text-transparent">
             Admin
           </h1>
         </div>
@@ -51,7 +51,7 @@ export default function AdminLogin() {
             placeholder="Zadej PIN"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-[0.3em] focus:ring-2 focus:ring-rose-300 focus:border-rose-300 outline-none transition-all bg-white"
+            className="w-full border border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-[0.3em] focus:ring-2 focus:ring-[#BF00FF]/30 focus:border-[#BF00FF]/50 outline-none transition-all bg-white"
             autoFocus
           />
 

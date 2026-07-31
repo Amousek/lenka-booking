@@ -197,7 +197,7 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="inline-block w-8 h-8 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+        <div className="inline-block w-8 h-8 border-4 border-violet-200 border-t-[#3B00DB] rounded-full animate-spin" />
       </div>
     );
   }
@@ -210,7 +210,7 @@ export default function AdminPage() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 pt-4">
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#3B00DB] to-[#BF00FF] bg-clip-text text-transparent">
             Admin Panel
           </h1>
           <button

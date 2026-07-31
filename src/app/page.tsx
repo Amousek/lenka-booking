@@ -145,27 +145,27 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8 md:mb-12 pt-2 md:pt-6 flex flex-col items-center">
           <div className="relative mb-5 group">
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-rose-400 via-pink-400 to-purple-500 rounded-full blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-[#3B00DB] via-[#7B00ED] to-[#BF00FF] rounded-full blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
             <img
               src="/lenka.jpg"
               alt="Lenka"
               className="relative w-36 h-36 sm:w-44 sm:h-44 object-cover rounded-full border-4 border-white shadow-xl transform transition duration-300 hover:scale-105"
             />
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-[#3B00DB] to-[#BF00FF] bg-clip-text text-transparent">
             Lenka
           </h1>
           <p className="text-gray-600 mt-3 text-base sm:text-lg lg:text-xl max-w-md mx-auto font-medium">
-            Ahoj! Tady si můžeš zarezervovat čas, kdy se konečně uvidíme. 💕
+            Ahoj! Tady si můžeš zarezervovat čas, kdy se konečně uvidíme. 🙈
           </p>
-          <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-rose-100/80 border border-rose-200/60 text-rose-700 text-sm font-semibold shadow-sm animate-fade-in">
+          <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-violet-100/80 border border-violet-200/60 text-violet-700 text-sm font-semibold shadow-sm animate-fade-in">
             <span>✨ Už se na vás moc těším!</span>
           </div>
         </div>
 
         {loading ? (
           <div className="text-center py-20">
-            <div className="inline-block w-10 h-10 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+            <div className="inline-block w-10 h-10 border-4 border-violet-200 border-t-[#3B00DB] rounded-full animate-spin" />
             <p className="text-gray-400 mt-4 text-sm">Načítám termíny…</p>
           </div>
         ) : (
@@ -174,77 +174,78 @@ export default function Home() {
             <div className="flex items-center justify-between mb-5 md:mb-6 card px-3 py-2.5 sm:px-5 sm:py-3">
               <button
                 onClick={() => setWeekStart(addDays(weekStart, -7))}
-                className="p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium text-sm sm:text-base"
+                className="p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium text-sm sm:text-base cursor-pointer"
               >
                 ← <span className="hidden sm:inline">Předchozí</span>
               </button>
               <span className="text-xs sm:text-sm font-semibold text-gray-700">{weekLabel}</span>
               <button
                 onClick={() => setWeekStart(addDays(weekStart, 7))}
-                className="p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium text-sm sm:text-base"
+                className="p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 font-medium text-sm sm:text-base cursor-pointer"
               >
                 <span className="hidden sm:inline">Další</span> →
               </button>
             </div>
 
-            {/* Calendar grid – responsive: 2 col mobile, 4 col tablet, 7 col desktop */}
+            {/* Calendar grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3">
               {weekDays.map((day, i) => {
                 const dateStr = toDateStr(day);
                 const daySlots = slotsByDate[dateStr] ?? [];
                 const isToday = dateStr === today;
                 const isPast = dateStr < today;
+                // Only show available (non-full) slots
+                const visibleSlots = daySlots.filter(
+                  (slot) => slot.max_persons - slot.approved_count > 0
+                );
 
                 return (
                   <div
                     key={dateStr}
                     className={`rounded-2xl border transition-all min-h-[130px] sm:min-h-[150px] lg:min-h-[170px] flex flex-col
                       ${isToday
-                        ? "border-rose-300 bg-rose-50/80 shadow-md shadow-rose-100/50 ring-1 ring-rose-200"
+                        ? "border-[#BF00FF]/30 bg-violet-50/80 shadow-md shadow-violet-100/50 ring-1 ring-[#BF00FF]/20"
                         : isPast
                           ? "border-gray-100 bg-gray-50/50 opacity-50"
                           : "border-white/40 bg-white/70 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-transform"
                       }`}
                   >
                     {/* Day header */}
-                    <div className={`text-center py-2 lg:py-2.5 border-b ${isToday ? "border-rose-200 bg-rose-100/50" : "border-gray-100"} rounded-t-2xl`}>
-                      <p className={`text-[10px] sm:text-xs font-medium uppercase tracking-wide ${isToday ? "text-rose-600" : "text-gray-400"}`}>
+                    <div className={`text-center py-2 lg:py-2.5 border-b ${isToday ? "border-violet-200 bg-violet-100/50" : "border-gray-100"} rounded-t-2xl`}>
+                      <p className={`text-[10px] sm:text-xs font-medium uppercase tracking-wide ${isToday ? "text-[#3B00DB]" : "text-gray-400"}`}>
                         <span className="lg:hidden">{DAY_NAMES_SHORT[i]}</span>
                         <span className="hidden lg:inline">{DAY_NAMES_LONG[i]}</span>
                       </p>
-                      <p className={`text-base sm:text-lg font-bold ${isToday ? "text-rose-600" : "text-gray-700"}`}>
+                      <p className={`text-base sm:text-lg font-bold ${isToday ? "text-[#3B00DB]" : "text-gray-700"}`}>
                         {day.getDate()}.
                       </p>
                     </div>
 
-                    {/* Slots */}
+                    {/* Slots – only show available ones */}
                     <div className="flex-1 p-1.5 sm:p-2 space-y-1.5">
-                      {daySlots.length === 0 && !isPast && (
+                      {visibleSlots.length === 0 && !isPast && (
                         <p className="text-[10px] text-gray-300 text-center mt-6 sm:mt-8">—</p>
                       )}
-                      {daySlots.map((slot) => {
+                      {visibleSlots.map((slot) => {
                         const available = slot.max_persons - slot.approved_count;
-                        const isFull = available <= 0;
                         const isSubmitted = submitted.has(slot.id);
 
                         return (
                           <button
                             key={slot.id}
                             onClick={() => {
-                              if (!isFull && !isSubmitted && !isPast) {
+                              if (!isSubmitted && !isPast) {
                                 setSelectedSlot(selectedSlot === slot.id ? null : slot.id);
                                 setError("");
                               }
                             }}
-                            disabled={isFull || isSubmitted || isPast}
+                            disabled={isSubmitted || isPast}
                             className={`w-full text-left p-2 sm:p-2.5 rounded-xl text-[11px] sm:text-xs leading-tight transition-all
                               ${selectedSlot === slot.id
-                                ? "bg-rose-100 ring-2 ring-rose-400 shadow-sm scale-[1.02]"
+                                ? "bg-violet-100 ring-2 ring-[#BF00FF] shadow-sm scale-[1.02]"
                                 : isSubmitted
                                   ? "bg-amber-50 border border-amber-200"
-                                  : isFull
-                                    ? "bg-gray-100 text-gray-400"
-                                    : "bg-gradient-to-r from-purple-50 to-rose-50 hover:from-purple-100 hover:to-rose-100 border border-purple-100 cursor-pointer hover:shadow-sm"
+                                  : "bg-gradient-to-r from-[#3B00DB]/5 to-[#BF00FF]/10 hover:from-[#3B00DB]/10 hover:to-[#BF00FF]/20 border border-violet-200/60 cursor-pointer hover:shadow-sm"
                               } disabled:cursor-default`}
                           >
                             <p className="font-semibold text-gray-700 truncate">
@@ -254,8 +255,6 @@ export default function Home() {
                             <p className="mt-0.5">
                               {isSubmitted ? (
                                 <span className="text-amber-600">⏳ Odesláno</span>
-                              ) : isFull ? (
-                                <span className="text-gray-400">Obsazeno</span>
                               ) : (
                                 <span className="text-emerald-600 font-medium">{available} {spotsLabel(available)}</span>
                               )}
@@ -271,7 +270,7 @@ export default function Home() {
 
             {!weekHasSlots && (
               <div className="text-center py-10 mt-4">
-                <p className="text-gray-400 text-base">V tomto týdnu nejsou žádné termíny 🌸</p>
+                <p className="text-gray-400 text-base">V tomto týdnu nejsou žádné termíny 🙈</p>
                 <p className="text-gray-300 text-sm mt-1">Zkus přepnout na další týden →</p>
               </div>
             )}
@@ -283,7 +282,7 @@ export default function Home() {
                   <p className="text-gray-400 text-sm mb-3">Nevyhovuje ti žádný termín?</p>
                   <button
                     onClick={() => setShowSuggestion(true)}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200 text-purple-600 font-medium hover:bg-purple-50 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-violet-200 text-[#3B00DB] font-medium hover:bg-violet-50 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
                   >
                     💡 Navrhnout vlastní termín
                   </button>
@@ -305,7 +304,7 @@ export default function Home() {
               )}
 
               {showSuggestion && !sugSuccess && (
-                <div className="card border-purple-200 p-5 sm:p-6 lg:p-8 animate-fade-in">
+                <div className="card border-violet-200 p-5 sm:p-6 lg:p-8 animate-fade-in">
                   <div className="flex items-center justify-between mb-5">
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-800">💡 Navrhnout termín</h2>
                     <button onClick={() => setShowSuggestion(false)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors cursor-pointer">✕</button>
@@ -365,7 +364,7 @@ export default function Home() {
               return (
                 <div className="fixed inset-x-0 bottom-0 z-50 animate-slide-up">
                   <div className="max-w-lg mx-auto p-4">
-                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-rose-200 p-5 sm:p-6">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-violet-200 p-5 sm:p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <p className="text-sm text-gray-500">
@@ -397,7 +396,7 @@ export default function Home() {
           </>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-12 pb-6">Made with 💕</p>
+        <p className="text-center text-xs text-gray-400 mt-12 pb-6">Made with 🙈</p>
       </div>
     </main>
   );
