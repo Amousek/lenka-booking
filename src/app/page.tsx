@@ -159,7 +159,7 @@ export default function Home() {
             Lenka
           </h1>
           <p className="text-gray-600 mt-3 text-base sm:text-lg lg:text-xl max-w-md mx-auto font-medium">
-            Ahoj! Tady si můžeš zarezervovat čas, kdy se konečně uvidíme. 🙈
+            Ahoj! Tady si můžeš zarezervovat čas, kdy se uvidíme. 🙈
           </p>
           <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-violet-100/80 border border-violet-200/60 text-violet-700 text-sm font-semibold shadow-sm animate-fade-in">
             <span>✨ Už se na vás moc těším!</span>
